@@ -858,27 +858,39 @@
         }
 
         function exportData() {
-    // Grab the student's name from your name input field (defaults to 'Student' if left blank)
-    const nameInput = document.getElementById('studentName') || document.getElementById('name');
-    const rawName = nameInput ? nameInput.value.trim() : 'Student';
+    // 1. Safely grab student name input
+    const nameInput = document.getElementById('studentName') || 
+                      document.getElementById('name') || 
+                      document.querySelector('input[type="text"]');
+    const rawName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Student';
+    const cleanName = rawName.replace(/[^a-zA-Z0-9]/g, '_');
     
-    // Format name (replaces spaces with underscores, removes special characters)
-    const cleanName = (rawName || 'Student').replace(/[^a-zA-Z0-9]/g, '_');
-    
-    // Get current date (YYYY-MM-DD)
+    // 2. Format current date
     const today = new Date().toISOString().split('T')[0];
-    
-    // Construct automated file name: e.g., APStats_Alex_Johnson_2026-10-15.json
     const fileName = `APStats_${cleanName}_${today}.json`;
 
-    // Package and download the JSON
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(studentLog || logData || []));
+    // 3. Find whichever data variable exists in your script
+    let dataToExport = [];
+    if (typeof logs !== 'undefined') dataToExport = logs;
+    else if (typeof log !== 'undefined') dataToExport = log;
+    else if (typeof questions !== 'undefined') dataToExport = questions;
+    else if (typeof loggedData !== 'undefined') dataToExport = loggedData;
+    else if (typeof savedLogs !== 'undefined') dataToExport = savedLogs;
+    else if (typeof studentLog !== 'undefined') dataToExport = studentLog;
+
+    // 4. Create blob and download file
+    const jsonString = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
     const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", fileName);
+    downloadAnchor.href = url;
+    downloadAnchor.download = fileName;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
-    downloadAnchor.remove();
+    
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
 }
 
         function importData(event) {
