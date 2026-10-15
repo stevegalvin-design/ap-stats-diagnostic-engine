@@ -858,14 +858,28 @@
         }
 
         function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `ap_stats_diagnostic_backup_${Date.now()}.json`);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
-        }
+    // Grab the student's name from your name input field (defaults to 'Student' if left blank)
+    const nameInput = document.getElementById('studentName') || document.getElementById('name');
+    const rawName = nameInput ? nameInput.value.trim() : 'Student';
+    
+    // Format name (replaces spaces with underscores, removes special characters)
+    const cleanName = (rawName || 'Student').replace(/[^a-zA-Z0-9]/g, '_');
+    
+    // Get current date (YYYY-MM-DD)
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Construct automated file name: e.g., APStats_Alex_Johnson_2026-10-15.json
+    const fileName = `APStats_${cleanName}_${today}.json`;
+
+    // Package and download the JSON
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(studentLog || logData || []));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
 
         function importData(event) {
             const fileReader = new FileReader();
