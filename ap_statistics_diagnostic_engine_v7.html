@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Statistics Diagnostic Engine (5-Unit CED Aligned)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        @media print {
+            body { background: white !important; color: black !important; }
+            header, form, button, .no-print { display: none !important; }
+            .bg-slate-900, .bg-slate-950 { background: white !important; color: black !important; border-color: #ccc !important; }
+            .text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400 { color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- TOP NAV / HEADER -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-brand-500/10 border border-brand-500/30 rounded-xl text-brand-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        AP Stats Diagnostic Engine
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-brand-400 border border-slate-700">5-Unit CED</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">State-Plan-Do-Conclude Diagnostic & AP Curve Score Estimator</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center space-x-2">
+                <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print Report
+                </button>
+                <button onclick="togglePhrasesModal()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    FRQ Magic Phrases
+                </button>
+                <button onclick="exportData()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-colors">Export JSON</button>
+                <label class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg cursor-pointer transition-colors">
+                    Import JSON
+                    <input type="file" id="importFileInput" onchange="importData(event)" class="hidden" accept=".json">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- SETUP PANEL -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                
+                <!-- Student Name Input (For Printouts) -->
+                <div class="md:col-span-1 space-y-2">
+                    <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Student Name</label>
+                    <input type="text" id="studentNameInput" placeholder="e.g. Alex Johnson" class="bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl px-3 py-2 w-full focus:outline-none focus:border-brand-500" onchange="saveProfileMeta()">
+                </div>
+
+                <!-- Exam Title -->
+                <div class="md:col-span-1 space-y-2">
+                    <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Exam Title</label>
+                    <input type="text" id="examTitleInput" placeholder="e.g. Practice Test 1" class="bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl px-3 py-2 w-full focus:outline-none focus:border-brand-500" onchange="saveProfileMeta()">
+                </div>
+
+                <!-- Test Structure (MCQ vs FRQ counts) -->
+                <div class="md:col-span-2 space-y-2">
+                    <label class="text-xs font-medium text-slate-400 uppercase tracking-wider">Test Length Setup (Score Curve Calibration)</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                            <span class="text-xs text-slate-400 font-medium">Total MCQs:</span>
+                            <input type="number" id="totalMcqInput" value="42" min="0" class="bg-transparent text-sm font-bold text-white w-full focus:outline-none text-right" onchange="saveProfileMeta()">
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                            <span class="text-xs text-slate-400 font-medium">Total FRQs:</span>
+                            <input type="number" id="totalFrqInput" value="4" min="0" class="bg-transparent text-sm font-bold text-white w-full focus:outline-none text-right" onchange="saveProfileMeta()">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- AP SCORE ESTIMATOR DASHBOARD BANNERS -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            
+            <!-- AP Score Band Card -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AP Score Estimate</span>
+                    <span id="scoreBandBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-800 text-slate-300 border border-slate-700">--</span>
+                </div>
+                <div class="my-3">
+                    <div class="flex items-baseline gap-2">
+                        <span id="apScoreDisplay" class="text-4xl font-extrabold text-white">--</span>
+                        <span class="text-xs text-slate-400">/ 5 Scale</span>
+                    </div>
+                    <p id="apScoreDescriptor" class="text-xs text-slate-400 mt-1">Log missed questions to calculate</p>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-1.5 border border-slate-800 overflow-hidden">
+                    <div id="apScoreProgressBar" class="bg-brand-500 h-1.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Weighted Composite % -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Weighted Composite</span>
+                <div class="my-3">
+                    <div class="text-3xl font-extrabold text-white" id="compositePercentDisplay">100%</div>
+                    <p class="text-xs text-slate-400 mt-1" id="compositeSubtext">0 deductions recorded</p>
+                </div>
+                <div class="text-xs text-slate-500 flex justify-between">
+                    <span>MCQ Weight: 50%</span>
+                    <span>FRQ Weight: 50%</span>
+                </div>
+            </div>
+
+            <!-- Target Score Gap Analysis -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between md:col-span-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Target Gap Analysis</span>
+                    <span id="targetNextBandBadge" class="text-xs text-brand-400 font-medium">Targeting Score 5</span>
+                </div>
+                <div class="my-2">
+                    <p id="targetGapAdvice" class="text-sm font-medium text-slate-200">
+                        Log your exam deductions below to see exact point recovery requirements for higher score bands.
+                    </p>
+                </div>
+                <div id="priorityActionNotice" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 flex items-start gap-2">
+                    <svg class="w-4 h-4 text-brand-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="priorityActionText">Priority focus will populate dynamically as questions are added below.</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- INPUT ENGINE & LOG TABLE -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+            
+            <div class="flex flex-wrap justify-between items-center gap-4 pb-4 border-b border-slate-800">
+                <div>
+                    <h2 class="text-base font-bold text-white">Log Diagnostic Entry</h2>
+                    <p class="text-xs text-slate-400">Classify missed questions by CED Unit and State-Plan-Do-Conclude Rubric Tag</p>
+                </div>
+                <button onclick="clearCurrentLog()" class="text-xs text-slate-500 hover:text-red-400 transition-colors">Clear Current Log</button>
+            </div>
+
+            <!-- Quick Log Input Row -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 items-end">
+                    
+                    <div class="md:col-span-1">
+                        <label class="block text-xs text-slate-400 mb-1">Q#</label>
+                        <input type="text" id="qNumInput" placeholder="e.g. 14" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Format</label>
+                        <select id="formatInput" onchange="handleFormatChange()" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none">
+                            <option value="MCQ">MCQ (1 Point)</option>
+                            <option value="FRQ">FRQ Rubric Point</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-1" id="pointsLostContainer">
+                        <label class="block text-xs text-slate-400 mb-1">Pts Lost</label>
+                        <input type="number" id="ptsLostInput" value="1" min="1" max="10" step="0.5" disabled class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none opacity-60">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Unit</label>
+                        <select id="unitInput" onchange="updateTopicDropdown()" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none">
+                            <option value="1">Unit 1: Exploring Data</option>
+                            <option value="2">Unit 2: Probability & Dist</option>
+                            <option value="3">Unit 3: Inference Categorical</option>
+                            <option value="4">Unit 4: Inference Quantitative</option>
+                            <option value="5">Unit 5: Regression & Slope</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs text-slate-400 mb-1">Topic</label>
+                        <select id="topicInput" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none">
+                            <!-- Populated dynamically via JS -->
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="block text-xs text-slate-400 mb-1">Root Cause Error Code</label>
+                        <select id="errorTypeInput" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-2 w-full focus:border-brand-500 focus:outline-none">
+                            <option value="[H] Hypotheses / Parameters">[H] Hypotheses / Parameters (State)</option>
+                            <option value="[C] Condition Verification">[C] Condition Verification (Plan)</option>
+                            <option value="[K] Calculator Syntax">[K] Calculator Syntax / Reading Output</option>
+                            <option value="[V] Vocab & Context">[V] Vocab & Context Definition</option>
+                            <option value="[A] Algebra / Computation">[A] Algebra / Computation (Do)</option>
+                            <option value="[S] Conclusion & Decision">[S] Conclusion & Decision Rules (Conclude)</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end pt-2 border-t border-slate-800/80">
+                    <div class="md:col-span-10">
+                        <label class="block text-xs text-slate-400 mb-1">Remediation Reflection / Notes</label>
+                        <input type="text" id="notesInput" placeholder="What specifically went wrong? (e.g., forgot np >= 10, stated p-hat instead of p)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-3 py-2 w-full focus:border-brand-500 focus:outline-none">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <button type="button" onclick="logDeductDirect()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs py-2 px-3 rounded-lg transition-colors shadow-lg shadow-brand-500/20">
+                            + Log Deduct
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Controls (Group Toggle) -->
+            <div class="flex justify-between items-center pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-slate-400">View Mode:</span>
+                    <button id="viewToggleChron" onclick="setViewMode('chronological')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-800 text-brand-400 font-medium border border-slate-700">Chronological</button>
+                    <button id="viewToggleUnit" onclick="setViewMode('grouped')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-950 text-slate-400 font-medium border border-slate-800 hover:text-white">Grouped by Unit</button>
+                </div>
+                <span id="loggedCountBadge" class="text-xs text-slate-500">0 Items Recorded</span>
+            </div>
+
+            <!-- Logged Items Table / View Container -->
+            <div id="logTableContainer" class="overflow-x-auto border border-slate-800 rounded-xl">
+                <!-- Table rendered dynamically -->
+            </div>
+
+        </section>
+
+        <!-- ANALYTICS DASHBOARD (CHARTS) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Chart 1: Unit Point Loss Distribution -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-white">Unit Breakdown (Points Lost)</h3>
+                    <span class="text-xs text-slate-500">CED Units 1 - 5</span>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="unitChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Root-Cause Error Distribution -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-white">Root-Cause Error Taxonomy</h3>
+                    <span class="text-xs text-slate-500">AP Rubric Categories</span>
+                </div>
+                <div class="relative h-64">
+                    <canvas id="errorChart"></canvas>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- EXPANDED FRQ MAGIC PHRASES MODAL (UNITS 1 - 5) -->
+    <div id="phrasesModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    AP Statistics FRQ "Magic Phrases" Sentence Frames (Units 1 - 5)
+                </h3>
+                <button onclick="togglePhrasesModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-5 text-xs text-slate-300">
+                
+                <!-- Unit 1 -->
+                <div>
+                    <h4 class="text-xs font-bold text-brand-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Unit 1: Exploring Data</h4>
+                    <div class="space-y-2">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Describing a Distribution (S.O.C.S.):</span>
+                            <p class="text-slate-300 mt-1">"The distribution of [variable in context] is <strong class="text-white">[Skewed Left/Right / Symmetric]</strong>, centered at a <strong class="text-white">[Median / Mean]</strong> of [Value with units], with a spread/IQR/SD of [Value with units], and has <strong class="text-white">[Outliers at Value / No apparent outliers]</strong>."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Comparing Two Distributions (MUST use comparative words):</span>
+                            <p class="text-slate-300 mt-1">"The median [variable] for [Group A] is <strong class="text-white">greater than</strong> [Group B], while both are <strong class="text-white">skewed right</strong>. The spread of [Group A] is <strong class="text-white">larger than</strong> [Group B], and [Group A] contains an outlier at [Value] whereas [Group B] has <strong class="text-white">no outliers</strong>."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unit 2 -->
+                <div>
+                    <h4 class="text-xs font-bold text-brand-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Unit 2: Probability & Random Variables</h4>
+                    <div class="space-y-2">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Expected Value E(X) or μ_X (In Context):</span>
+                            <p class="text-slate-300 mt-1">"If this [random process] is repeated <strong class="text-white">many, many times in the long run</strong>, the average [variable in context] per [trial/item] will be approximately [Value with units]."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Standard Deviation of a Random Variable σ_X (In Context):</span>
+                            <p class="text-slate-300 mt-1">"The [variable in context] typically <strong class="text-white">varies by about [σ value with units]</strong> from the mean of [μ value]."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unit 3 & 4 -->
+                <div>
+                    <h4 class="text-xs font-bold text-brand-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Units 3 & 4: Inference (Categorical & Quantitative)</h4>
+                    <div class="space-y-2">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Interpretation of p-value:</span>
+                            <p class="text-slate-300 mt-1">"Assuming that [H₀ in context] is true, there is a [p-value] probability of obtaining a sample statistic as extreme as or more extreme than observed, purely by random chance."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Conclusion Stage — Low p-value (p < α):</span>
+                            <p class="text-slate-300 mt-1">"Because p-value = [X] < α = [Y], we <strong class="text-white">reject H₀</strong>. There IS convincing statistical evidence that [statement of Ha in context]."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Conclusion Stage — High p-value (p ≥ α) [Fail / Do Not Reject]:</span>
+                            <p class="text-slate-300 mt-1">"Because p-value = [X] ≥ α = [Y], we <strong class="text-white">fail to reject H₀ (or do not reject H₀)</strong>. There IS NOT convincing statistical evidence that [statement of Ha in context]." <span class="text-red-400 font-semibold">(NEVER write 'accept H₀'!)</span></p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Confidence Level Meaning (C% Level):</span>
+                            <p class="text-slate-300 mt-1">"If we were to select <strong class="text-white">many random samples of the same size</strong> and construct a [C]% confidence interval for each, approximately <strong class="text-white">[C]% of the resulting intervals would capture the true population [parameter in context]</strong>."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unit 5 -->
+                <div>
+                    <h4 class="text-xs font-bold text-brand-400 uppercase tracking-wider mb-2 border-b border-slate-800 pb-1">Unit 5: Linear Regression</h4>
+                    <div class="space-y-2">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Slope of Regression Line (b):</span>
+                            <p class="text-slate-300 mt-1">"For each additional 1-[unit] increase in [Explanatory Variable X], the <strong class="text-white">predicted [Response Variable Y]</strong> changes by approximately [b value with units]."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Correlation Coefficient (r):</span>
+                            <p class="text-slate-300 mt-1">"There is a <strong class="text-white">[strong / moderate / weak]</strong>, <strong class="text-white">[positive / negative]</strong>, <strong class="text-white">linear</strong> relationship between [Explanatory X] and [Response Y] in context."</p>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="font-semibold text-slate-100">Coefficient of Determination (r²):</span>
+                            <p class="text-slate-300 mt-1">"Approximately <strong class="text-white">[r² × 100%] of the variation in [Response Variable Y]</strong> is accounted for by the <strong class="text-white">linear relationship</strong> with [Explanatory Variable X]."</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+                <button onclick="togglePhrasesModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">Close Reference</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP LOGIC SCRIPT -->
+    <script>
+        const CED_TOPICS = {
+            "1": [
+                "1.1 Displaying/Comparing Distributions (Dotplots, Histograms, Boxplots)",
+                "1.2 Summary Statistics (Mean/SD vs. Median/IQR, Outliers Rule)",
+                "1.3 Two-Way Tables: Joint, Marginal & Conditional Relative Frequencies",
+                "1.4 Sampling Methods (SRS, Stratified, Cluster, Systematic) & Bias",
+                "1.5 Experimental Design (Treatments, Blinding, Blocking, Confounding)"
+            ],
+            "2": [
+                "2.1 Probability Rules (Addition Rule, Complement, Disjoint)",
+                "2.2 Table Probabilities & Conditional Probability P(A|B)",
+                "2.3 Independence Tests (P(A|B)=P(A) or P(A∩B)=P(A)P(B))",
+                "2.4 Discrete Random Variables & Expected Value (μ_X = Σ x_i p_i)",
+                "2.5 Binomial Probability & Parameters (B-I-N-O Conditions)",
+                "2.6 Continuous RVs, Normal Distributions & z-Scores",
+                "2.7 Sampling Distributions & Central Limit Theorem (CLT)"
+            ],
+            "3": [
+                "3.1 1-Sample z-Interval / z-Test for Proportion (p)",
+                "3.2 2-Sample z-Interval / z-Test for Proportions (p1 - p2)",
+                "3.3 Chi-Square Test for Independence",
+                "3.4 Chi-Square Test for Homogeneity"
+            ],
+            "4": [
+                "4.1 1-Sample t-Interval / t-Test for Mean (μ)",
+                "4.2 Paired t-Test / t-Interval for Mean Difference (μ_d)",
+                "4.3 2-Sample t-Interval / t-Test for Means (μ1 - μ2)"
+            ],
+            "5": [
+                "5.1 Scatterplots, Correlation (r), and r^2 Interpretation",
+                "5.2 LSRL Residuals & Residual Plot Interpretation",
+                "5.3 High-Leverage, Outlier & Influential Points",
+                "5.4 t-Interval / t-Test for Regression Slope (β)"
+            ]
+        };
+
+        let state = {
+            studentName: 'Self-Diagnostic Student',
+            examTitle: 'Practice Test 1',
+            totalMcqs: 42,
+            totalFrqs: 4,
+            logs: [],
+            viewMode: 'chronological'
+        };
+
+        let unitChartInstance = null;
+        let errorChartInstance = null;
+
+        function updateTopicDropdown() {
+            const unitEl = document.getElementById('unitInput');
+            const unit = unitEl ? unitEl.value : "1";
+            const topicSelect = document.getElementById('topicInput');
+            if (!topicSelect) return;
+            
+            topicSelect.innerHTML = '';
+            const topics = CED_TOPICS[unit] || CED_TOPICS["1"];
+            topics.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                topicSelect.appendChild(opt);
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateTopicDropdown();
+            initCharts();
+            recalculateAnalytics();
+        });
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ap_stats_diagnostic_state_v5', JSON.stringify(state));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('ap_stats_diagnostic_state_v5');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Error loading state", e);
+                }
+            }
+            document.getElementById('studentNameInput').value = state.studentName || '';
+            document.getElementById('examTitleInput').value = state.examTitle || '';
+            document.getElementById('totalMcqInput').value = state.totalMcqs ?? 42;
+            document.getElementById('totalFrqInput').value = state.totalFrqs ?? 4;
+        }
+
+        function saveProfileMeta() {
+            state.studentName = document.getElementById('studentNameInput').value || 'Self-Diagnostic Student';
+            state.examTitle = document.getElementById('examTitleInput').value;
+            state.totalMcqs = parseInt(document.getElementById('totalMcqInput').value) || 0;
+            state.totalFrqs = parseInt(document.getElementById('totalFrqInput').value) || 0;
+            saveToLocalStorage();
+            recalculateAnalytics();
+        }
+
+        function handleFormatChange() {
+            const format = document.getElementById('formatInput').value;
+            const ptsInput = document.getElementById('ptsLostInput');
+            if (format === 'MCQ') {
+                ptsInput.value = 1;
+                ptsInput.disabled = true;
+                ptsInput.classList.add('opacity-60');
+            } else {
+                ptsInput.disabled = false;
+                ptsInput.classList.remove('opacity-60');
+            }
+        }
+
+        function logDeductDirect() {
+            const qNumInput = document.getElementById('qNumInput');
+            const qNum = qNumInput ? qNumInput.value.trim() : '';
+            if (!qNum) {
+                alert("Please enter a Question Number (Q#).");
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                qNum: qNum,
+                format: document.getElementById('formatInput').value,
+                ptsLost: parseFloat(document.getElementById('ptsLostInput').value) || 1,
+                unit: document.getElementById('unitInput').value,
+                topic: document.getElementById('topicInput').value,
+                errorType: document.getElementById('errorTypeInput').value,
+                notes: document.getElementById('notesInput').value.trim()
+            };
+
+            state.logs.unshift(entry);
+            saveToLocalStorage();
+
+            document.getElementById('qNumInput').value = '';
+            document.getElementById('notesInput').value = '';
+
+            recalculateAnalytics();
+        }
+
+        function deleteEntry(id) {
+            state.logs = state.logs.filter(item => item.id !== id);
+            saveToLocalStorage();
+            recalculateAnalytics();
+        }
+
+        function clearCurrentLog() {
+            if (confirm("Are you sure you want to clear all logged errors?")) {
+                state.logs = [];
+                saveToLocalStorage();
+                recalculateAnalytics();
+            }
+        }
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            const btnChron = document.getElementById('viewToggleChron');
+            const btnUnit = document.getElementById('viewToggleUnit');
+            if (mode === 'chronological') {
+                btnChron.className = "px-2.5 py-1 text-xs rounded-lg bg-slate-800 text-brand-400 font-medium border border-slate-700";
+                btnUnit.className = "px-2.5 py-1 text-xs rounded-lg bg-slate-950 text-slate-400 font-medium border border-slate-800 hover:text-white";
+            } else {
+                btnUnit.className = "px-2.5 py-1 text-xs rounded-lg bg-slate-800 text-brand-400 font-medium border border-slate-700";
+                btnChron.className = "px-2.5 py-1 text-xs rounded-lg bg-slate-950 text-slate-400 font-medium border border-slate-800 hover:text-white";
+            }
+            renderLogTable();
+        }
+
+        function recalculateAnalytics() {
+            const logs = state.logs || [];
+
+            const totalMcqs = parseInt(document.getElementById('totalMcqInput').value) || 42;
+            const totalFrqs = parseInt(document.getElementById('totalFrqInput').value) || 4;
+            const maxFrqPts = totalFrqs * 10;
+
+            let mcqPtsLost = 0;
+            let frqPtsLost = 0;
+
+            logs.forEach(l => {
+                if (l.format === 'MCQ') {
+                    mcqPtsLost += l.ptsLost;
+                } else {
+                    frqPtsLost += l.ptsLost;
+                }
+            });
+
+            const mcqPct = totalMcqs > 0 ? Math.max(0, (totalMcqs - mcqPtsLost) / totalMcqs) : 1;
+            const frqPct = maxFrqPts > 0 ? Math.max(0, (maxFrqPts - frqPtsLost) / maxFrqPts) : 1;
+
+            let compositePct = 0;
+            if (totalMcqs > 0 && maxFrqPts > 0) {
+                compositePct = (mcqPct * 0.50) + (frqPct * 0.50);
+            } else if (totalMcqs > 0) {
+                compositePct = mcqPct;
+            } else if (maxFrqPts > 0) {
+                compositePct = frqPct;
+            } else {
+                compositePct = 1;
+            }
+
+            const compPercentVal = Math.round(compositePct * 100);
+
+            let apScore = 5;
+            let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+            let descriptor = "Extremely Well Qualified";
+
+            if (compPercentVal >= 70) {
+                apScore = 5;
+                badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+                descriptor = "Extremely Well Qualified";
+            } else if (compPercentVal >= 58) {
+                apScore = 4;
+                badgeColor = "bg-brand-500/10 text-brand-400 border-brand-500/30";
+                descriptor = "Well Qualified";
+            } else if (compPercentVal >= 46) {
+                apScore = 3;
+                badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                descriptor = "Qualified (College Credit Threshold)";
+            } else if (compPercentVal >= 35) {
+                apScore = 2;
+                badgeColor = "bg-orange-500/10 text-orange-400 border-orange-500/30";
+                descriptor = "Possibly Qualified";
+            } else {
+                apScore = 1;
+                badgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+                descriptor = "No Recommendation";
+            }
+
+            document.getElementById('apScoreDisplay').textContent = apScore;
+            document.getElementById('apScoreDescriptor').textContent = descriptor;
+            const badge = document.getElementById('scoreBandBadge');
+            badge.textContent = `AP Score ${apScore}`;
+            badge.className = `px-2.5 py-0.5 rounded-full text-xs font-extrabold border ${badgeColor}`;
+            document.getElementById('apScoreProgressBar').style.width = `${compPercentVal}%`;
+
+            document.getElementById('compositePercentDisplay').textContent = `${compPercentVal}%`;
+            document.getElementById('compositeSubtext').textContent = `${logs.length} deductions logged (${mcqPtsLost} MCQ pts, ${frqPtsLost} FRQ pts)`;
+
+            updateTargetGapAnalysis(apScore, compPercentVal);
+            updatePriorityActionText(logs);
+
+            renderLogTable();
+            updateCharts(logs);
+        }
+
+        function updateTargetGapAnalysis(currentScore, currentPct) {
+            const badge = document.getElementById('targetNextBandBadge');
+            const text = document.getElementById('targetGapAdvice');
+
+            if (currentScore === 5) {
+                badge.textContent = "Score 5 Secured!";
+                text.textContent = "You are currently performing in the Score 5 composite range (70%+). Focus on eliminating small [S] conclusion and [H] hypothesis errors to build a safety buffer.";
+            } else {
+                const targets = { 4: 70, 3: 58, 2: 46, 1: 35 };
+                const nextTargetPct = targets[currentScore];
+                const pctGap = nextTargetPct - currentPct;
+                
+                badge.textContent = `Targeting Score ${currentScore + 1} (${nextTargetPct}% Threshold)`;
+                text.textContent = `You are approximately ${pctGap}% away from entering the Score ${currentScore + 1} curve band. Recovering ~${Math.ceil(pctGap / 2)} MCQ questions or ~${Math.ceil(pctGap / 2.5)} FRQ rubric points will bridge this gap.`;
+            }
+        }
+
+        function updatePriorityActionText(logs) {
+            const noticeText = document.getElementById('priorityActionText');
+            if (logs.length === 0) {
+                noticeText.textContent = "Log deductions below to unlock dynamic pedagogical advice.";
+                return;
+            }
+
+            const errorCounts = {};
+            logs.forEach(l => {
+                const code = l.errorType.substring(0, 3);
+                errorCounts[code] = (errorCounts[code] || 0) + l.ptsLost;
+            });
+
+            let maxCode = '';
+            let maxPts = 0;
+            Object.keys(errorCounts).forEach(c => {
+                if (errorCounts[c] > maxPts) {
+                    maxPts = errorCounts[c];
+                    maxCode = c;
+                }
+            });
+
+            const actionFrames = {
+                '[H]': "Priority Alert: Heavy deductions in [H] Hypotheses / Parameters! Always write population parameters (p, μ, β) instead of sample statistics (p-hat, x-bar) and state full context.",
+                '[C]': "Priority Alert: Frequent [C] Condition Verification failures! Review 10% condition, Expected Counts >= 5, and Large Counts (np >= 10, n >= 30) for Unit 3 & 4 inference.",
+                '[K]': "Priority Alert: Deductions driven by [K] Calculator Syntax! Practice verifying TI-84 command inputs (e.g. 1-PropZTest vs 2-PropZTest) and degrees of freedom.",
+                '[V]': "Priority Alert: Focus on [V] Vocab & Context definitions! Re-memorize exact sentence frames for p-value interpretations, confidence levels, and regression slope.",
+                '[A]': "Priority Alert: Lost points in [A] Algebra & Do stage mechanics! Double-check standard error setups and test statistic calculations.",
+                '[S]': "Priority Alert: High deductions in [S] Conclusions! Remember: NEVER say 'accept H0', always explicitly compare p-value to α, and conclude in context."
+            };
+
+            noticeText.textContent = actionFrames[maxCode] || "Review your logged deductions below to target specific weak topics.";
+        }
+
+        function renderLogTable() {
+            const container = document.getElementById('logTableContainer');
+            const logs = state.logs || [];
+
+            document.getElementById('loggedCountBadge').textContent = `${logs.length} Deductions Recorded`;
+
+            if (logs.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-500 text-xs">
+                        No missed questions logged yet. Use the form above to add your first diagnostic entry.
+                    </div>
+                `;
+                return;
+            }
+
+            if (state.viewMode === 'chronological') {
+                let html = `
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th class="p-3">Q#</th>
+                                <th class="p-3">Type</th>
+                                <th class="p-3">Unit</th>
+                                <th class="p-3">Specific Topic</th>
+                                <th class="p-3">Error Code</th>
+                                <th class="p-3">Notes</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60">
+                `;
+
+                logs.forEach(item => {
+                    html += `
+                        <tr class="hover:bg-slate-800/30 transition-colors">
+                            <td class="p-3 font-bold text-white">#${item.qNum}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.format === 'MCQ' ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}">${item.format} (-${item.ptsLost}pt)</span></td>
+                            <td class="p-3 font-semibold text-slate-200">Unit ${item.unit}</td>
+                            <td class="p-3 text-slate-300 max-w-xs truncate">${item.topic}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-amber-400 border border-slate-700">${item.errorType}</span></td>
+                            <td class="p-3 text-slate-400 max-w-xs truncate">${item.notes || '--'}</td>
+                            <td class="p-3 text-right"><button onclick="deleteEntry(${item.id})" class="text-slate-500 hover:text-rose-400 font-bold">&times;</button></td>
+                        </tr>
+                    `;
+                });
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+            } else {
+                let html = `<div class="p-4 space-y-6">`;
+                [1, 2, 3, 4, 5].forEach(uNum => {
+                    const unitLogs = logs.filter(l => String(l.unit) === String(uNum));
+                    if (unitLogs.length > 0) {
+                        html += `
+                            <div class="border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
+                                <div class="bg-slate-950 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
+                                    <span class="text-xs font-bold text-brand-400 uppercase tracking-wider">Unit ${uNum} Logged Deductions</span>
+                                    <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full">${unitLogs.length} Items</span>
+                                </div>
+                                <div class="divide-y divide-slate-800/60">
+                        `;
+                        unitLogs.forEach(item => {
+                            html += `
+                                <div class="p-3 flex items-center justify-between gap-4 text-xs">
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-bold text-white">#${item.qNum}</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-amber-400 border border-slate-700">${item.errorType}</span>
+                                        <span class="text-slate-300">${item.topic}</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <span class="text-slate-400 text-[11px] italic max-w-xs truncate">${item.notes || ''}</span>
+                                        <button onclick="deleteEntry(${item.id})" class="text-slate-500 hover:text-rose-400 font-bold">&times;</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += `</div></div>`;
+                    }
+                });
+                html += `</div>`;
+                container.innerHTML = html;
+            }
+        }
+
+        function initCharts() {
+            const ctxUnit = document.getElementById('unitChart').getContext('2d');
+            unitChartInstance = new Chart(ctxUnit, {
+                type: 'bar',
+                data: {
+                    labels: ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5'],
+                    datasets: [{
+                        label: 'Points Lost',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    }
+                }
+            });
+
+            const ctxError = document.getElementById('errorChart').getContext('2d');
+            errorChartInstance = new Chart(ctxError, {
+                type: 'doughnut',
+                data: {
+                    labels: ['[H] Hypothesis', '[C] Condition', '[K] Calculator', '[V] Vocab/Context', '[A] Algebra/Do', '[S] Conclusion'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: ['#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981', '#ec4899', '#f43f5e'],
+                        borderWidth: 2,
+                        borderColor: '#0f172a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(logs) {
+            if (!unitChartInstance || !errorChartInstance) return;
+
+            const unitTotals = [0, 0, 0, 0, 0];
+            logs.forEach(l => {
+                const uIdx = parseInt(l.unit) - 1;
+                if (uIdx >= 0 && uIdx < 5) {
+                    unitTotals[uIdx] += l.ptsLost;
+                }
+            });
+
+            unitChartInstance.data.datasets[0].data = unitTotals;
+            unitChartInstance.update();
+
+            const errorMap = { '[H]': 0, '[C]': 1, '[K]': 2, '[V]': 3, '[A]': 4, '[S]': 5 };
+            const errorTotals = [0, 0, 0, 0, 0, 0];
+
+            logs.forEach(l => {
+                const code = l.errorType.substring(0, 3);
+                if (errorMap[code] !== undefined) {
+                    errorTotals[errorMap[code]] += l.ptsLost;
+                }
+            });
+
+            errorChartInstance.data.datasets[0].data = errorTotals;
+            errorChartInstance.update();
+        }
+
+        function togglePhrasesModal() {
+            document.getElementById('phrasesModal').classList.toggle('hidden');
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `ap_stats_diagnostic_backup_${Date.now()}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+        }
+
+        function importData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.logs) {
+                        state = imported;
+                        saveToLocalStorage();
+                        loadFromLocalStorage();
+                        recalculateAnalytics();
+                        alert("Diagnostic state imported successfully!");
+                    }
+                } catch(err) {
+                    alert("Invalid JSON file format.");
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+    </script>
+</body>
+</html>
